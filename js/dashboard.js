@@ -19,8 +19,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }, 30000);
 
-  seedData();
-
   let data = getData();
   const sorted = data.slice().sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
 
