@@ -1,0 +1,324 @@
+/* ============================================================
+   Dashboard Admin — metrik, grafik (line/bar/pie), tabel,
+   ekspor .xlsx, dan manajemen data
+   ============================================================ */
+
+const CHARTS = {};
+
+document.addEventListener("DOMContentLoaded", () => {
+  if (!isLoggedIn()) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  const expiryWatcher = setInterval(() => {
+    if (!isLoggedIn()) {
+      clearInterval(expiryWatcher);
+      showToast("Sesi berakhir. Silakan login kembali.", "err");
+      setTimeout(() => (window.location.href = "login.html"), 1200);
+    }
+  }, 30000);
+
+  seedData();
+
+  let data = getData();
+  const sorted = data.slice().sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+
+  function buildStats(list) {
+    const total = list.length;
+    let l = 0, p = 0;
+    const prodiMap = {};
+    list.forEach((r) => {
+      if (r.jeniskelamin === "Perempuan") p++;
+      else l++;
+      prodiMap[r.prodi] = (prodiMap[r.prodi] || 0) + 1;
+    });
+    return { total, l, p, prodiMap };
+  }
+
+  function renderMetrics(s) {
+    document.getElementById("mTotal").textContent = s.total.toLocaleString("id-ID");
+    document.getElementById("mL").textContent = s.l.toLocaleString("id-ID");
+    document.getElementById("mP").textContent = s.p.toLocaleString("id-ID");
+    document.getElementById("mProdi").textContent = Object.keys(s.prodiMap).length;
+    document.getElementById("lastUpdate").textContent =
+      "Perbarui terakhir: " + new Date().toLocaleString("id-ID") + " · " + s.total + " pendaftar";
+  }
+
+  // ===== Line chart: tren per hari (30 hari) =====
+  function renderLine(list) {
+    const days = [];
+    const counts = [];
+    const now = new Date();
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      const dayStr = d.toISOString().slice(0, 10);
+      days.push(d.toLocaleDateString("id-ID", { day: "2-digit", month: "short" }));
+      counts.push(list.filter((r) => (r.tanggal ? new Date(r.tanggal).toISOString().slice(0, 10) : "") === dayStr).length);
+    }
+    const ctx = document.getElementById("chartLine");
+    if (CHARTS.line) CHARTS.line.destroy();
+    CHARTS.line = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: days,
+        datasets: [{
+          label: "Pendaftar",
+          data: counts,
+          borderColor: "#22d3ee",
+          backgroundColor: "rgba(34,211,238,.15)",
+          fill: true,
+          tension: 0.45,
+          pointRadius: 3,
+          pointBackgroundColor: "#e879f9",
+          borderWidth: 3
+        }]
+      },
+      options: baseOpts("Jumlah Pendaftar")
+    });
+  }
+
+  // ===== Bar chart: per prodi =====
+  function renderBar(prodiMap) {
+    const labels = Object.keys(prodiMap).sort((a, b) => prodiMap[b] - prodiMap[a]);
+    const values = labels.map((k) => prodiMap[k]);
+    const colors = palette(labels.length);
+    const ctx = document.getElementById("chartBar");
+    if (CHARTS.bar) CHARTS.bar.destroy();
+    CHARTS.bar = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [{
+          label: "Jumlah Pendaftar",
+          data: values,
+          backgroundColor: colors.map((c) => c + "CC"),
+          borderColor: colors,
+          borderWidth: 2,
+          borderRadius: 10,
+          maxBarThickness: 46
+        }]
+      },
+      options: baseOpts("Jumlah", true)
+    });
+  }
+
+  // ===== Pie chart: jenis kelamin =====
+  function renderPie(s) {
+    const ctx = document.getElementById("chartPie");
+    if (CHARTS.pie) CHARTS.pie.destroy();
+    CHARTS.pie = new Chart(ctx, {
+      type: "doughnut",
+      data: {
+        labels: ["Laki-laki", "Perempuan"],
+        datasets: [{
+          data: [s.l, s.p],
+          backgroundColor: ["#4f7cff", "#e879f9"],
+          borderColor: ["rgba(79,124,255,.6)", "rgba(232,121,249,.6)"],
+          borderWidth: 3,
+          hoverOffset: 14
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: "58%",
+        plugins: {
+          legend: { position: "bottom", labels: { color: "#a7adcf", padding: 18, font: { family: "Sora" } } },
+          title: {
+            display: true,
+            text: "Pembagian Jenis Kelamin",
+            color: "#f2f4ff",
+            font: { family: "Sora", size: 14, weight: "600" }
+          }
+        }
+      }
+    });
+  }
+
+  // ===== Tabel =====
+  function renderTable(list) {
+    const tbody = document.getElementById("tableBody");
+    if (!list.length) {
+      tbody.innerHTML =
+        '<tr class="placeholder-row"><td colspan="8"><div class="empty-state"><div class="big-ic">📭</div><h3>Belum ada pendaftar</h3><p>Data akan muncul di sini setelah mahasiswa mendaftar.</p></div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = list
+      .map((r, i) => {
+        const chip = r.jeniskelamin === "Perempuan"
+          ? '<span class="chip p">Perempuan</span>'
+          : '<span class="chip l">Laki-laki</span>';
+        return `<tr>
+          <td>${i + 1}</td>
+          <td style="color:var(--cyan);font-weight:700;">${r.id || "-"}</td>
+          <td style="font-weight:600;">${r.nama || "-"}</td>
+          <td>${r.nim || "-"}</td>
+          <td>${r.prodi || "-"}</td>
+          <td>${r.whatsapp || "-"}</td>
+          <td>${chip}</td>
+          <td style="color:var(--text-dim);">${formatDate(r.tanggal)}</td>
+        </tr>`;
+      })
+      .join("");
+  }
+
+  function renderAll() {
+    data = getData();
+    const s = buildStats(data);
+    renderMetrics(s);
+    renderLine(data);
+    renderBar(s.prodiMap);
+    renderPie(s);
+    renderTable(data.slice().sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal)));
+  }
+
+  const undoBtn = document.getElementById("btnUndo");
+
+  renderAll();
+  updateUndoUi();
+
+  // ===== Sidebar scroll navigation =====
+  document.querySelectorAll(".side-link[data-score]").forEach((a) => {
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
+      document.querySelectorAll(".side-link").forEach((x) => x.classList.remove("active"));
+      a.classList.add("active");
+      const target = document.getElementById(a.dataset.score);
+      if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+
+  // ===== Confirm modal helper =====
+  function confirmAction(title, msg, cb) {
+    const box = document.getElementById("confirmBox");
+    document.getElementById("cTitle").textContent = title;
+    document.getElementById("cMsg").textContent = msg;
+    box.classList.add("show");
+    const yes = document.getElementById("cYes");
+    const no = document.getElementById("cNo");
+    const cleanup = () => {
+      box.classList.remove("show");
+      yes.removeEventListener("click", onYes);
+      no.removeEventListener("click", onNo);
+    };
+    const onYes = () => { cleanup(); cb(true); };
+    const onNo = () => { cleanup(); cb(false); };
+    yes.addEventListener("click", onYes);
+    no.addEventListener("click", onNo);
+  }
+
+  // ===== Export Excel =====
+  function exportExcel() {
+    const d = getData();
+    if (!d.length) { showToast("Belum ada data untuk diekspor.", "err"); return; }
+    const rows = d.map((r) => ({
+      "ID": r.id || "-",
+      "Nama Lengkap": r.nama || "-",
+      "NIM": r.nim || "-",
+      "Program Studi": r.prodi || "-",
+      "Nomor WhatsApp": r.whatsapp || "-",
+      "Jenis Kelamin": r.jeniskelamin || "-",
+      "Tanggal Daftar": formatDate(r.tanggal)
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws["!cols"] = [
+      { wch: 14 }, { wch: 24 }, { wch: 16 }, { wch: 22 }, { wch: 18 }, { wch: 14 }, { wch: 18 }
+    ];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Pendaftar Symphony Choir");
+    XLSX.writeFile(wb, "Data_Pendaftar_SymphonyChoir_" + new Date().toISOString().slice(0, 10) + ".xlsx");
+    showToast("File Excel berhasil diunduh ✓", "ok");
+  }
+
+  document.getElementById("btnExport").addEventListener("click", (e) => { e.preventDefault(); exportExcel(); });
+  document.getElementById("btnExportTop").addEventListener("click", exportExcel);
+
+  // ===== Undo & Clear =====
+
+  function hasBackup() {
+    try {
+      return !!localStorage.getItem(PADUS_CONFIG.BACKUP_KEY);
+    } catch {
+      return false;
+    }
+  }
+
+  function updateUndoUi() {
+    undoBtn.classList.toggle("disabled", !hasBackup());
+  }
+
+  undoBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (!hasBackup()) return;
+    confirmAction("Pulihkan Data", "Data pendaftar yang terhapus akan dikembalikan. Lanjutkan?", (ok) => {
+      if (!ok) return;
+      const backup = JSON.parse(localStorage.getItem(PADUS_CONFIG.BACKUP_KEY));
+      localStorage.removeItem(PADUS_CONFIG.CLEARED_KEY);
+      localStorage.removeItem(PADUS_CONFIG.BACKUP_KEY);
+      saveData(backup);
+      renderAll();
+      updateUndoUi();
+      showToast("Data berhasil dipulihkan ✓", "ok");
+    });
+  });
+
+  document.getElementById("btnClear").addEventListener("click", (e) => {
+    e.preventDefault();
+    confirmAction("Hapus Semua Data", "Seluruh data pendaftar akan dihapus. Anda tetap dapat memulihkannya melalui menu Undo. Lanjutkan?", (ok) => {
+      if (!ok) return;
+      try {
+        localStorage.setItem(PADUS_CONFIG.BACKUP_KEY, JSON.stringify(getData()));
+      } catch {}
+      localStorage.setItem(PADUS_CONFIG.CLEARED_KEY, "1");
+      saveData([]);
+      renderAll();
+      updateUndoUi();
+      showToast("Data dihapus. Gunakan Undo untuk memulihkan.", "ok");
+    });
+  });
+
+  // ===== Refresh & Logout =====
+  document.getElementById("btnRefresh").addEventListener("click", () => {
+    renderAll();
+    showToast("Data diperbarui ✓", "ok");
+  });
+
+  document.getElementById("btnLogout").addEventListener("click", (e) => {
+    e.preventDefault();
+    clearSession();
+    window.location.href = "login.html";
+  });
+
+  // ===== Conditions =====
+  if (typeof XLSX === "undefined") {
+    console.warn("SheetJS gagal dimuat — ekspor Excel nonaktif.");
+  }
+
+  function palette(n) {
+    const base = ["#4f7cff", "#22d3ee", "#e879f9", "#facc15", "#fb923c", "#34d399", "#a78bfa", "#fb7185", "#2dd4bf", "#f472b6"];
+    return Array.from({ length: n }, (_, i) => base[i % base.length]);
+  }
+
+  function baseOpts(yTitle, gridVertical) {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: "#a7adcf", font: { family: "Sora" } } }
+      },
+      scales: {
+        x: {
+          ticks: { color: "#a7adcf", maxRotation: 45, minRotation: 0, autoSkip: true },
+          grid: { color: "rgba(255,255,255,.05)" }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { color: "#a7adcf", precision: 0 },
+          grid: { color: "rgba(255,255,255,.05)" },
+          title: { display: !!yTitle, text: yTitle, color: "#a7adcf" }
+        }
+      }
+    };
+  }
+});

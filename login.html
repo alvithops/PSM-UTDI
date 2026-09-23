@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login Admin — Symphony Choir</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <div class="scene">
+    <div class="blur-layer"></div>
+    <div class="bokeh b2"></div>
+    <div class="bokeh b4"></div>
+    <div class="bokeh b6"></div>
+  </div>
+
+  <div class="auth-stage">
+    <div class="glass-plinth auth-card">
+      <div class="auth-head">
+        <span class="logo svg-logo" style="margin:0 auto 14px;" aria-hidden="true">
+          <svg viewBox="0 0 40 40">
+            <g stroke="#ffffff" stroke-width="1.1" opacity="0.9">
+              <line x1="6" y1="13" x2="34" y2="13"/>
+              <line x1="6" y1="17" x2="34" y2="17"/>
+              <line x1="6" y1="21" x2="34" y2="21"/>
+              <line x1="6" y1="25" x2="34" y2="25"/>
+              <line x1="6" y1="29" x2="34" y2="29"/>
+            </g>
+            <g fill="#0a0a0f">
+              <ellipse cx="16" cy="22" rx="3.4" ry="2.4"/>
+              <ellipse cx="26" cy="18" rx="3.4" ry="2.4"/>
+            </g>
+            <g stroke="#0a0a0f" stroke-width="1.6" stroke-linecap="round">
+              <line x1="19.4" y1="22" x2="19.4" y2="12"/>
+              <line x1="29.4" y1="18" x2="29.4" y2="8"/>
+            </g>
+          </svg>
+        </span>
+        <div class="lock-ic">🔐</div>
+        <span class="eyebrow" style="margin-bottom:10px;">Area Resmi Admin</span>
+        <h1>Login Admin</h1>
+        <p style="color:var(--text-dim);font-size:.88rem;margin-top:6px;">Masuk untuk mengelola data pendaftar.</p>
+      </div>
+
+      <div class="auth-alert" id="authAlert">⚠️ Username atau password salah. Silakan coba lagi.</div>
+
+      <div class="auth-alert" id="lockMsg" style="display:none;"></div>
+
+      <form id="formLogin" novalidate>
+        <div class="form-grid" style="grid-template-columns:1fr;">
+          <div class="field" style="grid-column:auto;">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" placeholder="Masukkan username" maxlength="50" autocomplete="username" autofocus disabled-on-lock />
+          </div>
+          <div class="field" style="grid-column:auto;">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="••••••••" maxlength="64" autocomplete="current-password" disabled-on-lock />
+          </div>
+        </div>
+        <div class="form-actions" style="flex-direction:column;margin-top:22px;">
+          <button type="submit" class="btn btn-glass btn-block" id="btnLogin" disabled-on-lock>Masuk →</button>
+          <a href="index.html" class="btn btn-ghost btn-block" style="padding:8px;">← Kembali ke Beranda</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script src="js/login.js"></script>
+</body>
+</html>

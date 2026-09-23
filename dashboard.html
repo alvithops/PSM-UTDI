@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Admin — Symphony Choir</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="dash-body">
+
+  <div class="scene">
+    <div class="blur-layer"></div>
+    <div class="bokeh b1"></div>
+    <div class="bokeh b3"></div>
+    <div class="bokeh b5"></div>
+  </div>
+
+  <aside class="dash-side">
+    <a href="dashboard.html" class="brand" id="sideBrand">
+      <span class="logo svg-logo" aria-hidden="true">
+        <svg viewBox="0 0 40 40">
+          <g stroke="#ffffff" stroke-width="1.1" opacity="0.9">
+            <line x1="6" y1="13" x2="34" y2="13"/>
+            <line x1="6" y1="17" x2="34" y2="17"/>
+            <line x1="6" y1="21" x2="34" y2="21"/>
+            <line x1="6" y1="25" x2="34" y2="25"/>
+            <line x1="6" y1="29" x2="34" y2="29"/>
+          </g>
+          <g fill="#0a0a0f">
+            <ellipse cx="16" cy="22" rx="3.4" ry="2.4"/>
+            <ellipse cx="26" cy="18" rx="3.4" ry="2.4"/>
+          </g>
+          <g stroke="#0a0a0f" stroke-width="1.6" stroke-linecap="round">
+            <line x1="19.4" y1="22" x2="19.4" y2="12"/>
+            <line x1="29.4" y1="18" x2="29.4" y2="8"/>
+          </g>
+        </svg>
+      </span>
+      <span>SYMPHONY<span style="background:var(--spectrum);-webkit-background-clip:text;background-clip:text;color:transparent;">Admin</span></span>
+    </a>
+    <div class="side-title">Menu</div>
+    <a href="#" class="side-link active" data-score="overview">📊 Rekap Data</a>
+    <a href="#" class="side-link" data-score="charts">📈 Grafik</a>
+    <a href="#" class="side-link" data-score="table">📋 Tabel Pendaftar</a>
+    <div class="side-title" style="margin-top:16px;">Aksi</div>
+    <a href="#" class="side-link" id="btnUndo" style="color:var(--cyan);">↩️ Undo (Pulihkan Data)</a>
+    <a href="#" class="side-link" id="btnExport" style="color:var(--green);">⬇️ Ekspor Excel (.xlsx)</a>
+    <a href="#" class="side-link" id="btnClear" style="color:var(--red);">🗑️ Hapus Semua Data</a>
+    <div style="flex:1;"></div>
+    <a href="#" class="side-link" id="btnLogout" style="color:var(--text-dim);">🚪 Keluar</a>
+  </aside>
+
+  <main class="dash-main">
+    <div class="glass-plinth" style="padding:22px clamp(18px,3vw,28px);">
+      <div class="dash-top" style="margin-bottom:0;">
+        <div>
+          <h1>Dashboard Admin</h1>
+          <div class="muted" id="lastUpdate">Selamat datang, Admin 👋</div>
+        </div>
+        <div class="dash-tools">
+          <button class="btn btn-glass btn-sm" id="btnRefresh">🔄 Muat Ulang</button>
+          <button class="btn btn-solid btn-sm" id="btnExportTop">⬇️ Ekspor .xlsx</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Metrics -->
+    <div class="dash-section-title">Metrik & Rekap Data</div>
+    <div class="metric-grid" id="metricGrid">
+      <div class="glass-plinth metric-card"><span class="m-ic">🎓</span><div class="m-val" id="mTotal">0</div><div class="m-label">Total Pendaftar</div></div>
+      <div class="glass-plinth metric-card"><span class="m-ic">👨</span><div class="m-val" id="mL">0</div><div class="m-label">Laki-laki</div></div>
+      <div class="glass-plinth metric-card"><span class="m-ic">👩</span><div class="m-val" id="mP">0</div><div class="m-label">Perempuan</div></div>
+      <div class="glass-plinth metric-card"><span class="m-ic">🏫</span><div class="m-val" id="mProdi">0</div><div class="m-label">Program Studi</div></div>
+    </div>
+
+    <!-- Charts -->
+    <div class="dash-section-title" id="charts">Visualisasi Data</div>
+    <div class="chart-grid">
+      <div class="glass-plinth chart-card">
+        <div class="chart-title">📈 Diagram Garis — Tren Pendaftar (30 hari terakhir)</div>
+        <div class="chart-box"><canvas id="chartLine"></canvas></div>
+      </div>
+      <div class="glass-plinth chart-card">
+        <div class="chart-title">📊 Diagram Batang — Sebaran per Program Studi</div>
+        <div class="chart-box"><canvas id="chartBar"></canvas></div>
+      </div>
+      <div class="glass-plinth chart-card wide">
+        <div class="chart-title">🥧 Diagram Lingkaran — Persebaran Jenis Kelamin</div>
+        <div class="chart-box tall"><canvas id="chartPie"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="dash-section-title" id="table">Tabel Pendaftar</div>
+    <div class="glass-plinth" style="padding:0;overflow:hidden;">
+      <div class="table-wrap" id="tableWrap">
+        <table class="dash-table">
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>ID</th>
+              <th>Nama Lengkap</th>
+              <th>NIM</th>
+              <th>Program Studi</th>
+              <th>WhatsApp</th>
+              <th>Jenis Kelamin</th>
+              <th>Tanggal Daftar</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <div class="lightbox" id="confirmBox">
+    <div class="lb-card">
+      <div class="lb-msg">
+        <h3 id="cTitle">Konfirmasi</h3>
+        <p id="cMsg" style="color:var(--text-dim);font-size:.95rem;"></p>
+      </div>
+      <div class="hero-cta" style="flex-direction:column;gap:10px;">
+        <button class="btn btn-solid btn-block" id="cYes">Ya, Lanjutkan</button>
+        <button class="btn btn-ghost btn-block" id="cNo">Batal</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/vendor/chart.umd.min.js"></script>
+  <script src="js/vendor/xlsx.full.min.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

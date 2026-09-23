@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<title>responsive-test-harness</title>
+</head>
+<body>
+<textarea id="out" style="width:98%;height:80vh;font-family:monospace;font-size:11px"></textarea>
+<script>
+(async function () {
+  const widths = [320, 360, 400, 480, 640, 768, 960, 1280, 1366, 1536];
+  const pages = ["index.html", "daftar.html", "dashboard.html", "login.html", "sukses.html"];
+  const lines = [];
+  for (const w of widths) {
+    for (const p of pages) {
+      const ifr = document.createElement("iframe");
+      ifr.style.width = w + "px";
+      ifr.style.height = "900px";
+      ifr.style.border = "0";
+      document.body.appendChild(ifr);
+      await new Promise((res) => (ifr.onload = res));
+      await new Promise((res) => setTimeout(res, 500));
+      let report = "w=" + w + " page=" + p;
+      try {
+        const d = ifr.contentDocument;
+        const se = d.scrollingElement || d.documentElement;
+        const vw = Math.min(w, se.clientWidth);
+        report += " clientW=" + se.clientWidth + " scrollW=" + se.scrollWidth;
+        const overflow = se.scrollWidth > se.clientWidth + 1;
+        report += overflow ? " OVERFLOW-X" : " OK";
+        if (overflow) {
+          const els = d.body ? d.body.querySelectAll("*") : null;
+          let found = [];
+          if (els) {
+            for (const el of els) {
+              const r = el.getBoundingClientRect();
+              if (r.width > 0 && r.right > se.clientWidth + 2) {
+                const cls = (el.className && typeof el.className === "string") ? el.className : "";
+                const tag = el.tagName.toLowerCase();
+                found.push(tag + "." + cls.split(" ")[0] + "(r=" + Math.round(r.right) + ")");
+              }
+            }
+            if (found.length) report += " offenders[" + found.slice(0, 4).join(",") + "]";
+          }
+        }
+      } catch (e) {
+        report += " ERR:" + e.message;
+      }
+      lines.push(report);
+      ifr.remove();
+    }
+  }
+  document.getElementById("out").value = lines.join("\n");
+})();
+</script>
