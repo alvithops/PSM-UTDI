@@ -171,7 +171,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderTable(data.slice().sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal)));
   }
 
-  const undoBtn = document.getElementById("btnUndo"); /* baris tombol sudah dihapus dari HTML */
+  const undoBtn = document.getElementById("btnUndo");
 
   renderAll();
   updateUndoUi();
@@ -229,7 +229,7 @@ document.addEventListener("DOMContentLoaded", () => {
     showToast("File Excel berhasil diunduh ✓", "ok");
   }
 
-  const exportBtn = document.getElementById("btnExport"); if (exportBtn) exportBtn.addEventListener("click", (e) => { e.preventDefault(); exportExcel(); });
+  document.getElementById("btnExport").addEventListener("click", (e) => { e.preventDefault(); exportExcel(); });
   document.getElementById("btnExportTop").addEventListener("click", exportExcel);
 
   // ===== Undo & Clear =====
@@ -261,7 +261,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  const clearBtn = document.getElementById("btnClear"); if (clearBtn) clearBtn.addEventListener("click", (e) => {
+  document.getElementById("btnClear").addEventListener("click", (e) => {
     e.preventDefault();
     confirmAction("Hapus Semua Data", "Seluruh data pendaftar akan dihapus. Anda tetap dapat memulihkannya melalui menu Undo. Lanjutkan?", (ok) => {
       if (!ok) return;
@@ -280,9 +280,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btnRefresh").addEventListener("click", () => {
     renderAll();
     showToast("Data diperbarui ✓", "ok");
-
-  // ===== Auto-refresh dari Google Spreadsheet (sheet-sync.js) =====
-  window.addEventListener("padus:sheet-sync", () => { renderAll(); });
   });
 
   document.getElementById("btnLogout").addEventListener("click", (e) => {

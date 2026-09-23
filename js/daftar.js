@@ -67,6 +67,8 @@ document.addEventListener("DOMContentLoaded", () => {
     data.push(record);
     saveData(data);
 
+    if (window.padusPushToSheet) window.padusPushToSheet(record);
+
     sessionStorage.setItem("padus_pendaftar_baru", JSON.stringify(record));
 
     setTimeout(() => {

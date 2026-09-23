@@ -45,7 +45,11 @@
     <a href="#" class="side-link active" data-score="overview">📊 Rekap Data</a>
     <a href="#" class="side-link" data-score="charts">📈 Grafik</a>
     <a href="#" class="side-link" data-score="table">📋 Tabel Pendaftar</a>
-        <div style="flex:1;"></div>
+    <div class="side-title" style="margin-top:16px;">Aksi</div>
+    <a href="#" class="side-link" id="btnUndo" style="color:var(--cyan);">↩️ Undo (Pulihkan Data)</a>
+    <a href="#" class="side-link" id="btnExport" style="color:var(--green);">⬇️ Ekspor Excel (.xlsx)</a>
+    <a href="#" class="side-link" id="btnClear" style="color:var(--red);">🗑️ Hapus Semua Data</a>
+    <div style="flex:1;"></div>
     <a href="#" class="side-link" id="btnLogout" style="color:var(--text-dim);">🚪 Keluar</a>
   </aside>
 
